@@ -2,7 +2,7 @@
 
 import { useCurrentuser } from "@/services/supabase/hooks/useCurrentuser";
 import Link from "next/link";
-import { Button } from "./button";
+import { Button } from "./ui/button";
 import { LogoutButton } from "@/services/supabase/components/logout-button";
 import Image from "next/image";
 
