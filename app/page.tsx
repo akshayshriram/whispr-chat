@@ -8,12 +8,10 @@ import {
 import { MessageSquareIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { createAdminClient } from "@/lib/server";
 import { getCurrentUser } from "@/services/supabase/lib/getCurrentUser";
 import { redirect } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import LeaveRoomButton from "@/components/LeaveRoomButton";
-import JoinRoomButton from "@/components/JoinRoomButton";
+import RoomCard from "@/components/ui/RoomCard";
+import { getJoinedRooms, getPublicRooms } from "@/services/helper/Room.helper";
 
 export default async function Home() {
 
@@ -22,13 +20,19 @@ export default async function Home() {
   if (user == null) {
     redirect("/auth/login");
   }
-  const [publicRooms, joinedRooms] = await Promise.all([getPublicRooms(), getJoinedRooms(user.id)]);
+  const [publicRoomsResult, joinedRoomsResult] = await Promise.all([getPublicRooms(), getJoinedRooms(user.id)]);
 
   // Check for errors
-  if ('error' in publicRooms || 'error' in joinedRooms) {
-    const error = ('error' in publicRooms ? publicRooms : joinedRooms) as { error: boolean; message: string };
-    return <div className="container mx-auto px-4 py-8">Error: {error.message}</div>;
+  if ('error' in publicRoomsResult) {
+    return <div className="container mx-auto px-4 py-8">Error: {publicRoomsResult.message}</div>;
   }
+
+  if ('error' in joinedRoomsResult) {
+    return <div className="container mx-auto px-4 py-8">Error: {joinedRoomsResult.message}</div>;
+  }
+
+  const publicRooms = publicRoomsResult;
+  const joinedRooms = joinedRoomsResult;
 
   if (publicRooms.length === 0 && joinedRooms.length === 0) {
     return (
@@ -88,69 +92,3 @@ export function RoomList({ title, rooms, isJoined }: { title: string, rooms: { i
   </>
 
 }
-
-export function RoomCard({ id, name, memberCount, isJoined }: { id: string, name: string, memberCount: number, isJoined: boolean }) {
-  return <Card>
-    <CardHeader>
-      <CardTitle>{name}</CardTitle>
-      <CardDescription>{memberCount} {memberCount === 1 ? "member" : "members"}</CardDescription>
-    </CardHeader>
-    <CardContent className="flex gap-2">
-      {isJoined ? (
-        <>
-          <Button
-            asChild
-            className="grow" size={"sm"}>
-            <Link href={`/rooms/${id}`}>Enter</Link>
-          </Button>
-          <LeaveRoomButton roomId={id} size="sm" variant="destructive" >Leave</LeaveRoomButton>
-        </>
-      ) : (
-        <JoinRoomButton className="" roomId={id} size="sm" variant="outline" >Join</JoinRoomButton>
-      )}
-    </CardContent>
-  </Card>
-}
-
-export async function getPublicRooms() {
-  const supabase = await createAdminClient();
-
-  const { data, error } = await supabase
-    .from("chat_room")
-    .select("id, name, chat_room_member (count)")
-    .eq("is_public", true)
-    .order("name", { ascending: true })
-
-  if (error || data == null) {
-    return { error: true, message: error?.message ?? "Failed to get public rooms" };
-  }
-
-  return data.map((room) => ({
-    id: room.id,
-    name: room.name,
-    memberCount: room.chat_room_member[0].count,
-  }));
-}
-
-export async function getJoinedRooms(userId: string) {
-
-  const supabase = await createAdminClient();
-
-  const { data, error } = await supabase
-    .from("chat_room")
-    .select("id, name, chat_room_member (member_id)")
-    .order("name", { ascending: true })
-
-  if (error || data == null) {
-    return { error: true, message: error?.message ?? "Failed to get public rooms" };
-  }
-
-  return data
-    .filter((room) => room.chat_room_member.some((member) => member.member_id === userId))
-    .map((room) => ({
-      id: room.id,
-      name: room.name,
-      memberCount: room.chat_room_member.length,
-    }));
-}
-
