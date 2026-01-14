@@ -1,6 +1,7 @@
 "use client"
 
 import { Message } from "@/services/supabase/actions/messages";
+import ChatInput from "@/components/ChatInput";
 
 type ChatRoom = {
     id: string;
@@ -27,12 +28,17 @@ export function RoomClient({ room, user, messages }: { room: ChatRoom, user: Use
 
                 {/* <InviteuserModal roomId={room?.id} /> */}
             </div>
-            <div className="grow overflow-y-auto flex flex-col-reverse">
+            <div className="grow overflow-y-auto flex flex-col-reverse"
+                style={{
+                    scrollbarWidth: "thin",
+                    scrollbarColor: "var(--border) transparent",
+                }}>
                 <div>
                     {messages.map((message) => (
                         <ChatMessage key={message.id} {...message} />
                     ))}
                 </div>
+                <ChatInput roomId={room?.id} />
             </div>
         </div>
     )
