@@ -10,11 +10,11 @@ const ChatInput = ({ roomId }: { roomId: string }) => {
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
-        setMessage('');
-
+        
         const text = message.trim();
         if (!text) return;
-
+        
+        setMessage('');
         const result = await sendMessage({ text, roomId: roomId });
         if (result.error) {
             toast.error(result.message);

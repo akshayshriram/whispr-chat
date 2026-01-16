@@ -2,6 +2,7 @@
 
 import { Message } from "@/services/supabase/actions/messages";
 import ChatInput from "@/components/ChatInput";
+import ChatMessage from "@/components/ChatMessage";
 
 type ChatRoom = {
     id: string;
@@ -34,12 +35,12 @@ export function RoomClient({ room, user, messages }: { room: ChatRoom, user: Use
                     scrollbarColor: "var(--border) transparent",
                 }}>
                 <div>
-                    {messages.map((message) => (
-                        <ChatMessage key={message.id} {...message} />
+                    {messages.toReversed().map((message) => (
+                        <ChatMessage key={message.id} message={message} />
                     ))}
                 </div>
-                <ChatInput roomId={room?.id} />
             </div>
+            <ChatInput roomId={room?.id} />
         </div>
     )
 }
@@ -48,18 +49,6 @@ function InviteUserModal({ roomId }: { roomId: string }) {
     return (
         <div>
             <h1>Invite User</h1>
-        </div>
-    )
-}
-
-function ChatMessage({ id, text, created_at, author_id, author }: Message) {
-    return (
-        <div>
-            <p>{text}</p>
-            <p>{created_at}</p>
-            <p>{author_id}</p>
-            <p>{author.name}</p>
-            <p>{author.image_url}</p>
         </div>
     )
 }
