@@ -2,6 +2,7 @@ import React from 'react'
 import { Message as Messagetype } from '@/services/supabase/actions/messages'
 import Image from 'next/image'
 import { User2Icon } from 'lucide-react'
+import { cn } from '@/lib/utils';
 
 const DATE_FORMATTER = new Intl.DateTimeFormat(undefined, {
     dateStyle: 'short',
@@ -10,10 +11,13 @@ const DATE_FORMATTER = new Intl.DateTimeFormat(undefined, {
 
 const ChatMessage = ({ message }: { message: Messagetype }) => {
 
-    const { text, author, created_at, author_id } = message;
+    const { text, author, created_at, status } = message;
 
     return (
-        <div className="flex gap-4 px-4 py-2 hover:bg-accent/50">
+        <div className={cn("flex gap-4 px-4 py-2 hover:bg-accent/50", {
+            "opacity-30 animate-pulse animation-delay:0.1s]": status === "pending",
+            "bg-destructive/10 text-destructive": status === "error"
+        })}>
             <div className="shrink-0">
                 {author?.image_url != null ?
                     <Image src={author.image_url} alt={author.name} width={40} height={40} className="rounded-full" />

@@ -2,25 +2,36 @@ import React, { useState } from 'react'
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } from './ui/input-group'
 import { SendIcon } from 'lucide-react'
 import { toast } from 'sonner'
-import { sendMessage } from '@/services/supabase/actions/messages'
+import { Message, sendMessage } from '@/services/supabase/actions/messages'
 
-const ChatInput = ({ roomId }: { roomId: string }) => {
+type props = {
+    roomId: string
+    onSend: (message: { id: string; text: string }) => void
+    onSuccessSend: (message: Message) => void
+    onErrorSend: (id: string) => void
+}
+
+const ChatInput = ({ roomId, onSend, onSuccessSend, onErrorSend }: props) => {
     const [message, setMessage] = useState('')
 
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
-        
+
         const text = message.trim();
         if (!text) return;
-        
+
         setMessage('');
-        const result = await sendMessage({ text, roomId: roomId });
+        const id = crypto.randomUUID()
+        onSend({ id, text })
+        const result = await sendMessage({ id, text, roomId });
         if (result.error) {
             toast.error(result.message);
+            onErrorSend(id)
             return;
         } else {
-            toast.success(`Message sent: ${result.message.text}`);
+            // toast.success(`Message sent: ${result.message.text}`);
+            onSuccessSend(result.message)
             setMessage('');
         }
 

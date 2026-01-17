@@ -15,9 +15,11 @@ export type Message = {
 };
 
 async function sendMessage({
+  id,
   text,
   roomId,
 }: {
+  id: string;
   text: string;
   roomId: string;
 }): Promise<
@@ -51,6 +53,7 @@ async function sendMessage({
   const { data: message, error } = await supabase
     .from("message")
     .insert({
+      id,
       text: text.trim(),
       chat_room_id: roomId,
       author_id: user.id,
