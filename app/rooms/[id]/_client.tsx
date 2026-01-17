@@ -7,6 +7,8 @@ import { RealtimeChannel } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/client";
 import { InviteUserModal } from "@/components/InviteUserModal";
+import { Button } from "@/components/ui/button";
+import { resolve } from "path";
 
 type ChatRoom = {
     id: string;
@@ -22,10 +24,16 @@ type UserProfile = {
 
 export function RoomClient({ room, user, messages }: { room: ChatRoom, user: UserProfile, messages: Message[] }) {
 
+
+    const { loadMoreMessages, messages: oldMessages, status, triggerQueryRef } = useInfiniteScrollChat({
+        roomId: room.id,
+        startingMessages: messages.toReversed()
+    })
+
     const { connectedUsers, messages: realtimeMessages } = useRealtimeChat({ roomId: room.id, userId: user.id })
     const [sentMessages, setSentMessages] = useState<(Message & { status: "pending" | "error" | "success" })[]>([])
 
-    const visibleMessages = messages.toReversed().concat(realtimeMessages, sentMessages.filter(m => !realtimeMessages.find(rm => rm.id === m.id)))
+    const visibleMessages = oldMessages.concat(realtimeMessages, sentMessages.filter(m => !realtimeMessages.find(rm => rm.id === m.id)))
 
     return (
         <div className="container mx-auto h-screen-with-header border border-y-0 flex flex-col">
@@ -45,8 +53,22 @@ export function RoomClient({ room, user, messages }: { room: ChatRoom, user: Use
                     scrollbarColor: "var(--border) transparent",
                 }}>
                 <div>
-                    {visibleMessages.map((message) => (
-                        <ChatMessage key={message.id} message={message} />
+                    {status === "loading" && (
+                        <p className="text-center text-sm text-muted-foreground py-2">
+                            Loading more messages...
+                        </p>
+                    )}
+                    {status === "error" && (
+                        <div className="text-center">
+                            <p className="text-sm text-destructive py-2">
+                                Error loading messages.
+                            </p>
+                            <Button onClick={loadMoreMessages} variant={"outline"}>Retry</Button>
+                        </div>
+                    )}
+
+                    {visibleMessages.map((message, index) => (
+                        <ChatMessage key={message.id} message={message} ref={index === 0 && status === "idle" ? triggerQueryRef : null} />
                     ))}
                 </div>
             </div>
@@ -142,4 +164,74 @@ function useRealtimeChat({ roomId, userId }: { roomId: string, userId: string })
     }, [roomId, userId])
 
     return { connectedUsers, messages }
+}
+
+const LIMIT = 25
+
+function useInfiniteScrollChat({
+    startingMessages,
+    roomId
+}: {
+    startingMessages: Message[],
+    roomId: string
+}) {
+    const [messages, setMessages] = useState<Message[]>(startingMessages)
+
+    const [status, setStatus] = useState<"idle" | "loading" | "error" | "done">(startingMessages.length === 0 ? "done" : "idle")
+
+    async function loadMoreMessages() {
+        if (status === "done" || status === "loading") return
+
+        const supabase = await createClient()
+        setStatus("loading")
+
+        await new Promise(resolve => setTimeout(resolve, 2000)) //Aritifical delay
+
+        const { data, error } = await supabase
+            .from("message")
+            .select("id, text, created_at, author_id, author:user_profile (name, image_url)")
+            .eq("chat_room_id", roomId)
+            .lt("created_at", messages[0].created_at)
+            .order("created_at", { ascending: false })
+            .limit(LIMIT)
+
+        if (error) {
+            setStatus("error")
+            return
+        }
+        const mappedData = data.map((message) => ({
+            id: message.id,
+            text: message.text,
+            created_at: message.created_at,
+            author_id: message.author_id,
+            author: {
+                name: message.author.name,
+                image_url: message.author.image_url ?? "",
+            },
+        }))
+        setMessages(prev => [...mappedData.toReversed(), ...prev])
+        setStatus(data.length < LIMIT ? "done" : "idle")
+    }
+
+    function triggerQueryRef(node: HTMLDivElement | null) {
+        if (node == null) return
+        const observer = new IntersectionObserver(enteries => {
+            enteries.forEach(entry => {
+                if (entry.isIntersecting && entry.target === node) {
+                    observer.unobserve(node)
+                    loadMoreMessages()
+                }
+            })
+        }, {
+            rootMargin: "50px",
+        })
+
+        observer.observe(node)
+
+        return () => {
+            observer.disconnect()
+        }
+    }
+
+    return { loadMoreMessages, messages, status, triggerQueryRef }
 }
