@@ -6,6 +6,7 @@ import ChatMessage from "@/components/ChatMessage";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/client";
+import { InviteUserModal } from "@/components/InviteUserModal";
 
 type ChatRoom = {
     id: string;
@@ -28,15 +29,15 @@ export function RoomClient({ room, user, messages }: { room: ChatRoom, user: Use
 
     return (
         <div className="container mx-auto h-screen-with-header border border-y-0 flex flex-col">
-            <div className="flex items-center justify-between gap-2">
-                <div className="p-4 border-b">
+            <div className="flex items-center justify-between gap-2 p-4">
+                <div className=" border-b">
                     <h1 className="text-2xl font-bold">{room?.name}</h1>
                     {/* Need to add Real-time functionality */}
                     <p className="text-sm text-muted-foreground">{connectedUsers} {connectedUsers === 1 ? "user" : "users"} online</p>
                     <p className="text-sm text-muted-foreground">{messages?.length}</p>
                 </div>
+                <InviteUserModal roomId={room?.id} />
 
-                {/* <InviteuserModal roomId={room?.id} /> */}
             </div>
             <div className="grow overflow-y-auto flex flex-col-reverse"
                 style={{
@@ -81,14 +82,6 @@ export function RoomClient({ room, user, messages }: { room: ChatRoom, user: Use
                     )
                 }}
             />
-        </div>
-    )
-}
-
-function InviteUserModal({ roomId }: { roomId: string }) {
-    return (
-        <div>
-            <h1>Invite User</h1>
         </div>
     )
 }
