@@ -4,7 +4,7 @@ import { Message } from "@/services/supabase/actions/messages";
 import ChatInput from "@/components/ChatInput";
 import ChatMessage from "@/components/ChatMessage";
 import { useState } from "react";
-import { InviteUserModal } from "@/components/InviteUserModal";
+// import { InviteUserModal } from "@/components/InviteUserModal";
 import { Button } from "@/components/ui/button";
 import { useRealtimeChat } from "@/services/supabase/hooks/useRealtimeChat";
 import useInfiniteScrollChat from "@/services/supabase/hooks/useInfiniteScrollChat";
@@ -55,7 +55,7 @@ export function RoomClient({ room, user, messages }: { room: ChatRoom, user: Use
                     <p className="text-sm text-muted-foreground">{connectedUsers} {connectedUsers === 1 ? "user" : "users"} online</p>
                     <p className="text-sm text-muted-foreground">{messages?.length}</p>
                 </div>
-                <InviteUserModal roomId={room?.id} />
+                {/* <InviteUserModal roomId={room?.id} /> */}
 
             </div>
             <div className="grow overflow-y-auto flex flex-col-reverse"
