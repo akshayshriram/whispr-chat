@@ -19,7 +19,7 @@ export async function GET() {
     console.log("getTABLE", getTABLE);
     const supabase = createSupabaseClient(supabaseUrl, supabaseServiceKey);
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from(getTABLE)
       .select("id")
       .limit(Math.floor(Math.random() * 10) + 1);
@@ -31,7 +31,7 @@ export async function GET() {
       );
     }
 
-    return NextResponse.json({ ok: true, data });
+    return NextResponse.json({ ok: true });
   } catch (error) {
     return NextResponse.json(
       {
